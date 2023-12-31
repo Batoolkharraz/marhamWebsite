@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:dash/Drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
 
 class Doctor extends StatefulWidget {
   final Map<String, dynamic> doc;
@@ -38,6 +40,23 @@ class _DoctorState extends State<Doctor> {
   List<String> category = <String>[];
   late String dropdownValuecat = list.first;
   late String cat = '';
+  String numPatient = '';
+  String numApp = '';
+  String numAppM = '';
+  Uint8List? image;
+
+  Future<void> selectImage() async {
+    final ImagePicker imagePicker = ImagePicker();
+    final XFile? pickedFile =
+        await imagePicker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final Uint8List img = await pickedFile.readAsBytes();
+      setState(() {
+        image = img;
+      });
+    }
+  }
 
   Future getPrice() async {
     var url = "https://marham-backend.onrender.com/price/${widget.doc['_id']}";
@@ -97,7 +116,7 @@ class _DoctorState extends State<Doctor> {
     }
   }
 
-  void updateDoctor() async {
+  void updateDoctor(Uint8List? imageBytes) async {
     String name = '';
     String phone = '';
     String add = '';
@@ -111,6 +130,7 @@ class _DoctorState extends State<Doctor> {
     address.isEmpty ? add = widget.doc['address'] : add = address;
     catController.text.isEmpty ? category = cat : category = catController.text;
     String email = widget.doc['email'];
+
     final updates = {
       "email": email,
       "name": name,
@@ -120,14 +140,35 @@ class _DoctorState extends State<Doctor> {
       "description": category
     };
 
-    var url = Uri.parse("https://marham-backend.onrender.com/doctor/update");
-    var response = await http.patch(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(updates),
-    );
+    var url = Uri.parse("https://marham-backend.onrender.com/doctor/update/");
+
+    try {
+      var request = http.MultipartRequest('PATCH', url)..fields.addAll(updates);
+
+      // Add the image file to the request if available
+      if (imageBytes != null) {
+        final http.MultipartFile file = http.MultipartFile.fromBytes(
+          'image',
+          imageBytes,
+          filename: 'image.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        );
+        request.files.add(file);
+      }
+
+      var response = await http.Client().send(request);
+
+      if (response.statusCode == 200) {
+        // Handle the success response
+        print('doctor updated successfully');
+      } else {
+        // Handle the error response
+        print('Failed to update doctor. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
   }
 
   void updatePrice() async {
@@ -159,11 +200,95 @@ class _DoctorState extends State<Doctor> {
     print(response.body);
   }
 
+  Future<void> getNumApp() async {
+    var url =
+        "https://marham-backend.onrender.com/schedule/getNumApp/${widget.doc['_id']}";
+
+    try {
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var responseBody = response.body.toString();
+        responseBody = responseBody.trim();
+        var num = jsonDecode(responseBody);
+        setState(() {
+          var numP = num;
+          numApp = numP.toString();
+
+          // Assuming cat['name'] is a list of category names
+          dropdownValuecat = category.first;
+        });
+      } else {
+        // Handle the error when the HTTP request fails
+        print('Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
+  }
+
+  Future<void> getNumAppMonth() async {
+    var url =
+        "https://marham-backend.onrender.com/schedule/getNumAppMonth/${widget.doc['_id']}";
+
+    try {
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var responseBody = response.body.toString();
+        responseBody = responseBody.trim();
+        var num = jsonDecode(responseBody);
+        setState(() {
+          var numP = num;
+          numAppM = numP.toString();
+
+          // Assuming cat['name'] is a list of category names
+          dropdownValuecat = category.first;
+        });
+      } else {
+        // Handle the error when the HTTP request fails
+        print('Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
+  }
+
+  Future<void> getNumP() async {
+    var url =
+        "https://marham-backend.onrender.com/schedule/getNumPatient/${widget.doc['_id']}";
+
+    try {
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var responseBody = response.body.toString();
+        responseBody = responseBody.trim();
+        var num = jsonDecode(responseBody);
+        setState(() {
+          var numP = num;
+          numPatient = numP.toString();
+        });
+      } else {
+        // Handle the error when the HTTP request fails
+        print('Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     getPrice();
     getCategory();
+    getNumP();
+    getNumApp();
+    getNumAppMonth();
   }
 
   @override
@@ -272,7 +397,7 @@ class _DoctorState extends State<Doctor> {
                         width: 20,
                       ),
                       Text(
-                        price + " sh",
+                        price + " nis",
                         style: TextStyle(
                             fontFamily: 'salsa',
                             fontSize: 20,
@@ -368,10 +493,21 @@ class _DoctorState extends State<Doctor> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 250.0),
+                    child: FaIcon(
+                      FontAwesomeIcons.check,
+                      color: Colors.blue,
+                      size: 30.0,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 250.0),
                     child: Text(
                       'some of Doctor achevment:  ',
                       style: TextStyle(
-                          fontFamily: 'salsa',
+                          fontFamily: 'Salsa',
                           fontSize: 20,
                           fontWeight: FontWeight.bold),
                     ),
@@ -379,74 +515,98 @@ class _DoctorState extends State<Doctor> {
                 ],
               ),
               SizedBox(
-                height: 40,
+                height: 20,
               ),
               Row(
                 children: [
+                  FaIcon(
+                    FontAwesomeIcons.person,
+                    color: Colors.blue,
+                    size: 30.0,
+                  ),
+                  SizedBox(
+                    width: 38,
+                  ),
+                  Text(
+                    'Number of patient: ',
+                    style: TextStyle(
+                      fontFamily: 'Salsa',
+                      fontSize: 18,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Text(
+                    numPatient,
+                    style: TextStyle(
+                      fontFamily: 'Salsa',
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 15,
+              ),
+              Row(
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.peopleGroup,
+                    color: Colors.blue,
+                    size: 30.0,
+                  ),
+                  SizedBox(
+                    width: 20,
+                  ),
                   Text(
                     'Number of booked Appoitment: ',
                     style: TextStyle(
-                        fontFamily: 'salsa',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      fontFamily: 'Salsa',
+                      fontSize: 18,
+                    ),
                   ),
                   SizedBox(
                     width: 0,
                   ),
                   Text(
-                    '20 ',
+                    numApp,
                     style: TextStyle(
-                        fontFamily: 'salsa',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      fontFamily: 'Salsa',
+                      fontSize: 18,
+                    ),
                   ),
                 ],
               ),
               SizedBox(
-                height: 40,
+                height: 15,
               ),
               Row(
                 children: [
+                  FaIcon(
+                    FontAwesomeIcons.peopleGroup,
+                    color: Colors.blue,
+                    size: 30.0,
+                  ),
+                  SizedBox(
+                    width: 20,
+                  ),
                   Text(
                     'Number of booked Appoitment in last month: ',
                     style: TextStyle(
-                        fontFamily: 'salsa',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      fontFamily: 'Salsa',
+                      fontSize: 18,
+                    ),
                   ),
                   SizedBox(
                     width: 10,
                   ),
                   Text(
-                    '20 ',
+                    numAppM,
                     style: TextStyle(
-                        fontFamily: 'salsa',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 40,
-              ),
-              Row(
-                children: [
-                  Text(
-                    'Number of patient: ',
-                    style: TextStyle(
-                        fontFamily: 'salsa',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    '20 ',
-                    style: TextStyle(
-                        fontFamily: 'salsa',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      fontFamily: 'Salsa',
+                      fontSize: 18,
+                    ),
                   ),
                 ],
               ),
@@ -533,7 +693,7 @@ class _DoctorState extends State<Doctor> {
                                 TextButton(
                                   child: const Text('Confirm'),
                                   onPressed: () {
-                                    updateDoctor();
+                                    updateDoctor(image);
                                     updatePrice();
 
                                     Navigator.of(context).pop();
@@ -582,11 +742,15 @@ class _DoctorState extends State<Doctor> {
                       fontSize: 20,
                     ),
                     prefixIcon:
-                        Icon(Icons.person, color: Colors.grey, size: 25),
+                        Icon(Icons.person, color: Colors.grey, size: 30),
                   ),
                   onChanged: (value) {
                     setState(() {
-                      nameController.text = value;
+                      nameController.value = nameController.value.copyWith(
+                          text: value,
+                          selection:
+                              TextSelection.collapsed(offset: value.length),
+                          composing: TextRange.empty);
                     });
                   },
                 ),
@@ -668,14 +832,11 @@ class _DoctorState extends State<Doctor> {
                       size: 25,
                     ),
                   ),
-                  // inputFormatters: [
-                  //   FilteringTextInputFormatter.digitsOnly,
-                  //   LengthLimitingTextInputFormatter(16),
-                  //   CardInputFormatter(),
-                  // ],
                   onChanged: (value) {
                     setState(() {
-                      priceController.text = value;
+                      priceController.text = '$value ';
+                      priceController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: value.length + 1));
                     });
                   },
                 ),
@@ -742,6 +903,76 @@ class _DoctorState extends State<Doctor> {
                     ),
                   ),
                 ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0, left: 70),
+                child: SizedBox(
+                  width: 200,
+                  height: 180,
+                  child: Stack(
+                    children: [
+                      image != null
+                          ? Container(
+                              width: 200,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF0561DD),
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0561DD)
+                                        .withOpacity(0.3),
+                                    offset: const Offset(0, 4),
+                                    blurRadius: 15,
+                                  ),
+                                ],
+                              ),
+                              child: CircleAvatar(
+                                radius: 90,
+                                backgroundImage: MemoryImage(image!),
+                              ),
+                            )
+                          : Container(
+                              width: 200,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.blue,
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0561DD)
+                                        .withOpacity(0.3),
+                                    offset: const Offset(0, 4),
+                                    blurRadius: 15,
+                                  ),
+                                ],
+                              ),
+                              child: const CircleAvatar(
+                                radius: 90,
+                                backgroundImage: AssetImage("images/pic.png"),
+                              ),
+                            ),
+                      Positioned(
+                        bottom: 10,
+                        left: 140,
+                        child: IconButton(
+                          onPressed: selectImage,
+                          icon: const Icon(
+                            Icons.add_a_photo,
+                            size: 35,
+                            color: Color(0xFF0561DD),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

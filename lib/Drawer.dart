@@ -1,5 +1,6 @@
 import 'package:dash/Mainpage.dart/Category/addcat.dart';
 import 'package:dash/Mainpage.dart/Category/delete_cat.dart';
+import 'package:dash/Mainpage.dart/Category/mainCategory.dart';
 import 'package:dash/Mainpage.dart/Doctors/add_doctor.dart';
 import 'package:dash/Mainpage.dart/Overview.dart';
 import 'package:flutter/material.dart';
@@ -131,7 +132,8 @@ Widget DrawerWidget(BuildContext context) {
                     Navigator.pop(context); // Close the drawer
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => add_Cat()),
+                      MaterialPageRoute(builder: (context) => mainCategory(
+                      )),
                     );
                   } else if (selectedCategory == 'Delete Category') {
                     Navigator.pop(context); // Close the drawer
