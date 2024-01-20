@@ -241,10 +241,10 @@ class _DoctorState extends State<Doctor> {
         var num = jsonDecode(responseBody);
         setState(() {
           var numP = num;
-          numAppM = numP.toString();
 
-          // Assuming cat['name'] is a list of category names
-          dropdownValuecat = category.first;
+          numAppM = numP.toString();
+   // Assuming cat['name'] is a list of category names
+              dropdownValuecat = category.first;
         });
       } else {
         // Handle the error when the HTTP request fails

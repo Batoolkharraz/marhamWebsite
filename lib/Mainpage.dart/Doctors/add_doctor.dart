@@ -71,7 +71,7 @@ class _add_doctorState extends State<add_doctor> {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 150.0),
+                  padding: const EdgeInsets.only(top: 120.0),
                   child: Column(
                     children: [
                       // Doctor Name and Email

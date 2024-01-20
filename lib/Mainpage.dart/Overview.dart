@@ -1,8 +1,12 @@
 import 'dart:convert';
 
 import 'package:dash/Drawer.dart';
+import 'package:dash/Mainpage.dart/Category/mainCategory.dart';
+import 'package:dash/Mainpage.dart/Doctors/add_doctor.dart';
 import 'package:dash/Mainpage.dart/Doctors/doctor.dart';
 import 'package:dash/Mainpage.dart/Doctors/search/findDoctorList.dart';
+import 'package:dash/user/unit/load.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -20,12 +24,14 @@ class _OverViewState extends State<OverView> {
   final List _doctors = [];
   List _foundedDoctors = [];
   List categories = [];
- 
+
   List<String> searchCat = [];
   List<String> searchAddress = [];
   bool display = false;
   final storage = const FlutterSecureStorage();
-
+  String numDoc = '';
+  String numUser = '';
+  String numApp = '';
   Future<void> getCategories() async {
     var url = "https://marham-backend.onrender.com/category/";
 
@@ -213,11 +219,84 @@ class _OverViewState extends State<OverView> {
     });
   }
 
+  Future<void> getNumD() async {
+    var url = "https://marham-backend.onrender.com/doctor/getNumDoctor/123";
+
+    try {
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var responseBody = response.body.toString();
+        responseBody = responseBody.trim();
+        var num = jsonDecode(responseBody);
+        setState(() {
+          var numP = num;
+          numDoc = numP.toString();
+        });
+      } else {
+        // Handle the error when the HTTP request fails
+        print('Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
+  }
+
+  Future<void> getNumU() async {
+    var url = "https://marham-backend.onrender.com/doctor/getNumUser/123";
+    try {
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var responseBody = response.body.toString();
+        responseBody = responseBody.trim();
+        var num = jsonDecode(responseBody);
+        setState(() {
+          var numP = num;
+          numUser = numP.toString();
+        });
+      } else {
+        // Handle the error when the HTTP request fails
+        print('Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
+  }
+
+  Future<void> getNumA() async {
+    var url = "https://marham-backend.onrender.com/schedule/getNumAppAll/123";
+    try {
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var responseBody = response.body.toString();
+        responseBody = responseBody.trim();
+        var num = jsonDecode(responseBody);
+        setState(() {
+          var numP = num;
+          numApp = numP.toString();
+        });
+      } else {
+        // Handle the error when the HTTP request fails
+        print('Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle other types of errors, such as network errors
+      print('Error: $error');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     getCategories();
     getDoctors();
+    getNumU();
+    getNumD();
+    getNumA();
     setState(() {
       _foundedDoctors = _doctors;
     });
@@ -281,12 +360,221 @@ class _OverViewState extends State<OverView> {
       drawer: DrawerWidget(context),
       body: Row(
         children: [
-          Container(width: 500, child: Text('tab1')),
-          Container(width: 500, child: Text('tab2')),
-          Divider(
-            color: Colors.grey, // You can change the color of the line
-            thickness: 10, // You can adjust the thickness of the line
+          Padding(
+            padding: const EdgeInsets.only(left: 30, top: 30),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                        height: 250,
+                        width: 500,
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(
+                              29), // Set the border radius here
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 15,
+                            ),
+                            Text(
+                              "Welcom back Admin,\n",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Salsa',
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            Image.asset(
+                              "images/copy.png",
+                            ),
+                          ],
+                        )),
+                    SizedBox(
+                      width: 80,
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+                Row(
+                  children: [
+                    Column(
+                      children: [
+                        load(num: numUser),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Container(
+                          child: Text(
+                            'Users',
+                            style: TextStyle(
+                              fontFamily: 'Salsa',
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Column(
+                      children: [
+                        load(num: numDoc),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Container(
+                          child: Text(
+                            'Doctors',
+                            style: TextStyle(
+                              fontFamily: 'Salsa',
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Column(
+                      children: [
+                        load(num: numApp),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Container(
+                          child: Text(
+                            'Appoitments',
+                            style: TextStyle(
+                              fontFamily: 'Salsa',
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+
+                    Padding(
+                      padding: const EdgeInsets.only(top:30.0),
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => mainCategory(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              width: 300,
+                              height: 100,
+                              child: Center(
+                                child: Row(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 25.0),
+                                      child: FaIcon(
+                                        FontAwesomeIcons.plus,
+                                        color: Colors.white,
+                                        size: 30.0,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 15,
+                                    ),
+                                    Container(
+                                        child: Center(
+                                      child: Text(
+                                        'Category',
+                                        style: TextStyle(
+                                            fontFamily: 'Salsa',
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      ),
+                                    )),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 25,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => add_doctor(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              width: 300,
+                              height: 100,
+                              child: Center(
+                                child: Row(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 25.0),
+                                      child: FaIcon(
+                                        FontAwesomeIcons.plus,
+                                        color: Colors.white,
+                                        size: 30.0,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 15,
+                                    ),
+                                    Container(
+                                        child: Center(
+                                      child: Text(
+                                        'Doctor',
+                                        style: TextStyle(
+                                            fontFamily: 'Salsa',
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      ),
+                                    )),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+],
+                      ),
+                    ),
+          SizedBox(width: 80),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
